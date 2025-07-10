@@ -171,6 +171,7 @@ class MathFacts {
     this.gameStarted = false;
     this.setSelected = false;
     this.soundEnabled = true;
+    this.previousQuestion = null;
 
     this.initializeCorrectSounds();
     this.initializeLocalStorage();
@@ -387,8 +388,22 @@ class MathFacts {
       return null; // No struggle questions, use random
     }
 
+    // Filter out the previous question to avoid repetition
+    const filteredQuestions = this.previousQuestion ? 
+      struggleQuestions.filter(q => q.question !== this.previousQuestion) : 
+      struggleQuestions;
+
+    // If we filtered out all questions (only one struggle question and it was the previous one),
+    // fall back to random question generation
+    if (filteredQuestions.length === 0) {
+      console.log('Only struggle question available was the previous one, using random question');
+      return null;
+    }
+
+    const questionsToUse = filteredQuestions;
+
     // Shuffle the array to add randomness while maintaining priority
-    const shuffled = [...struggleQuestions];
+    const shuffled = [...questionsToUse];
     for (let i = shuffled.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
@@ -404,10 +419,8 @@ class MathFacts {
       probability *= 0.5; // Halve probability for next question
     }
 
-    // If we get here, select the last question
-    const selected = shuffled[shuffled.length - 1];
-    console.log(`Selected last struggle question: ${selected.question} (${selected.type}, count: ${selected.count})`);
-    return selected;
+    // If we get here, fall through to a random question
+    return null;
   }
 
   // Remove question from struggle list if mastered
@@ -556,6 +569,8 @@ class MathFacts {
       console.log(`Using random question: ${this.currentQuestion} = ${this.currentAnswer}`);
     }
 
+    // Update previous question for next iteration
+    this.previousQuestion = this.currentQuestion;
     this.showQuestion();
   }
 
@@ -780,6 +795,7 @@ class MathFacts {
     this.gameStarted = false;
     this.setSelected = false;
     this.currentSet = null;
+    this.previousQuestion = null;
     this.questionHistory = [];
     this.historyDisplay.innerHTML = '';
     this.progressCounter.innerHTML = '';
