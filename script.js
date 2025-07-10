@@ -167,9 +167,26 @@ class MathFacts {
     this.gameStarted = false;
     this.setSelected = false;
 
+    this.initializeCorrectSounds();
     this.initializeLocalStorage();
     this.showSetSelection();
     this.setupEventListeners();
+  }
+
+  // Initialize correct answer sounds with volume settings
+  initializeCorrectSounds() {
+    this.correctSounds = [
+      { file: 'correct1.mp3', volume: 0.8 },
+      { file: 'correct2.mp3', volume: 0.6 },
+      { file: 'correct3.mp3', volume: 0.7 },
+      { file: 'correct4.mp3', volume: 0.9 },
+      { file: 'correct5.mp3', volume: 0.5 },
+      { file: 'cheer.mp3', volume: 0.4 },
+      { file: 'ding.mp3', volume: 0.8 },
+      { file: 'success.mp3', volume: 0.7 },
+      { file: 'yay.mp3', volume: 0.6 },
+      { file: 'woohoo.mp3', volume: 0.8 }
+    ];
   }
 
   // Initialize local storage for tracking problematic questions
@@ -406,13 +423,14 @@ class MathFacts {
 
     if (isCorrect) {
       this.correctAnswers++;
+      this.playCorrectSound();
       // Track slow but correct answers
       if (isSlow) {
         this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'slow', thinkingTime);
       }
     } else {
       this.incorrectAnswers++;
-      this.playSound('wrong.mp3');
+      this.playSound('wrong.mp3', 0.3);
       // Track wrong answers
       this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'wrong', thinkingTime);
     }
@@ -422,12 +440,21 @@ class MathFacts {
     this.generateNewQuestion();
   }
 
-  playSound(soundFile) {
+  playSound(soundFile, volume = 1.0) {
     const audio = new Audio(soundFile);
-    if (soundFile === 'wrong.mp3') {
-      audio.volume = 0.3;
-    }
+    audio.volume = volume;
     audio.play().catch(e => console.log('Could not play sound:', e));
+  }
+
+  // Play a random correct answer sound
+  playCorrectSound() {
+    if (this.correctSounds.length === 0) {
+      return;
+    }
+    
+    const randomIndex = Math.floor(Math.random() * this.correctSounds.length);
+    const soundConfig = this.correctSounds[randomIndex];
+    this.playSound(soundConfig.file, soundConfig.volume);
   }
 
   showResults() {
@@ -446,7 +473,7 @@ class MathFacts {
 
     if (isExcellent) {
       resultsHTML += `<div class="celebration">🎉 Excellent! 🎉</div>`;
-      this.playSound('celebration.mp3');
+      this.playSound('celebration.mp3', 1.0);
     }
 
     resultsHTML += `</div>`;
