@@ -48,6 +48,7 @@ class MathFacts {
     this.soundToggle = document.getElementById('soundToggle');
     this.clearStateButton = document.getElementById('clearStateButton');
     this.checkmarkAnimation = document.getElementById('checkmarkAnimation');
+    this.debugPanel = document.getElementById('debugPanel');
     this.questionHistory = [];
     this.currentSet = null;
     this.questionSets = {
@@ -185,15 +186,15 @@ class MathFacts {
 
       { file: 'sounds/4-bing-things-82661.mp3', volume: 1.0 },
       { file: 'sounds/alert-sound-87478.mp3', volume: 1.0 },
-      { file: 'sounds/belch-155023.mp3', volume: 0.7 },
+      { file: 'sounds/belch-155023.mp3', volume: 0.5 },
       { file: 'sounds/bing-298405.mp3', volume: 1.0 },
-      { file: 'sounds/cow_bells_01-98236.mp3', volume: 1.0 },
-      { file: 'sounds/din-ding-89718.mp3', volume: 1.0 },
+      { file: 'sounds/cow_bells_01-98236.mp3', volume: 0.8 },
+      { file: 'sounds/din-ding-89718.mp3', volume: 0.7 },
       { file: 'sounds/elevator_ping_02-40404.mp3', volume: 1.0 },
-      { file: 'sounds/mission-success-41211.mp3', volume: 1.0 },
-      { file: 'sounds/notification-sound-269266.mp3', volume: 1.0 },
+      { file: 'sounds/mission-success-41211.mp3', volume: 0.9 },
+      { file: 'sounds/notification-sound-269266.mp3', volume: 0.9 },
       { file: 'sounds/short-success-sound-glockenspiel-treasure-video-game-6346.mp3', volume: 1.0 },
-      { file: 'sounds/success-221935.mp3', volume: 1.0 },
+      { file: 'sounds/success-221935.mp3', volume: 0.7 },
       { file: 'sounds/win-176035.mp3', volume: 1.0 },
     ];
   }
@@ -349,6 +350,121 @@ class MathFacts {
     }, 1000);
   }
 
+  // Get sorted struggle questions for current game
+  getStruggleQuestions() {
+    if (!this.currentSet || !this.problematicQuestions[this.currentSet]) {
+      return [];
+    }
+
+    const wrongQuestions = this.problematicQuestions[this.currentSet].wrong || {};
+    const slowQuestions = this.problematicQuestions[this.currentSet].slow || {};
+
+    // Combine wrong and slow questions, prioritizing wrong ones
+    const allStruggles = [];
+
+    // Add wrong questions with higher priority
+    Object.values(wrongQuestions).forEach(q => {
+      allStruggles.push({ ...q, type: 'wrong', priority: q.count * 2 });
+    });
+
+    // Add slow questions with lower priority
+    Object.values(slowQuestions).forEach(q => {
+      allStruggles.push({ ...q, type: 'slow', priority: q.count });
+    });
+
+    // Sort by priority (highest first), then by count
+    return allStruggles.sort((a, b) => {
+      if (a.priority !== b.priority) return b.priority - a.priority;
+      return b.count - a.count;
+    });
+  }
+
+  // Select a question using weighted struggle-based algorithm
+  selectQuestionByStruggle() {
+    const struggleQuestions = this.getStruggleQuestions();
+
+    if (struggleQuestions.length === 0) {
+      return null; // No struggle questions, use random
+    }
+
+    // Shuffle the array to add randomness while maintaining priority
+    const shuffled = [...struggleQuestions];
+    for (let i = shuffled.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+    }
+
+    // Apply weighted selection: 50%, 25%, 12.5%, etc.
+    let probability = 0.5;
+    for (let i = 0; i < shuffled.length; i++) {
+      if (Math.random() < probability) {
+        console.log(`Selected struggle question: ${shuffled[i].question} (${shuffled[i].type}, count: ${shuffled[i].count})`);
+        return shuffled[i];
+      }
+      probability *= 0.5; // Halve probability for next question
+    }
+
+    // If we get here, select the last question
+    const selected = shuffled[shuffled.length - 1];
+    console.log(`Selected last struggle question: ${selected.question} (${selected.type}, count: ${selected.count})`);
+    return selected;
+  }
+
+  // Remove question from struggle list if mastered
+  removeFromStruggleList(question, isCorrect, isSlow) {
+    if (!isCorrect || isSlow) {
+      return; // Only remove if correct and fast
+    }
+
+    const questionKey = question.replace(/\s/g, '');
+
+    // Remove from wrong questions
+    if (this.problematicQuestions[this.currentSet]?.wrong?.[questionKey]) {
+      delete this.problematicQuestions[this.currentSet].wrong[questionKey];
+      console.log(`Removed ${question} from wrong struggle list (mastered)`);
+    }
+
+    // Remove from slow questions
+    if (this.problematicQuestions[this.currentSet]?.slow?.[questionKey]) {
+      delete this.problematicQuestions[this.currentSet].slow[questionKey];
+      console.log(`Removed ${question} from slow struggle list (mastered)`);
+    }
+
+    this.saveProblematicQuestions();
+    this.updateDebugPanel();
+  }
+
+  // Update debug panel display
+  updateDebugPanel() {
+    if (!this.gameStarted || !this.currentSet) {
+      this.debugPanel.classList.add('hidden');
+      return;
+    }
+
+    this.debugPanel.classList.remove('hidden');
+    const struggleQuestions = this.getStruggleQuestions();
+
+    let html = '<h4>Struggle Questions</h4>';
+
+    if (struggleQuestions.length === 0) {
+      html += '<div>No struggles yet!</div>';
+    } else {
+      struggleQuestions.slice(0, 10).forEach((q, index) => {
+        const typeIndicator = q.type === 'wrong' ? '❌' : '⏳';
+        html += `<div class="struggle-item">
+          ${typeIndicator} ${q.question}
+          <span class="struggle-count">(${q.count})</span>
+        </div>`;
+      });
+
+      if (struggleQuestions.length > 10) {
+        html += `<div style="margin-top: 0.5rem; font-style: italic;">...and ${struggleQuestions.length - 10} more</div>`;
+      }
+    }
+
+    this.debugPanel.innerHTML = html;
+  }
+
   showSetSelection() {
     this.mathDisplay.innerHTML = `
       <div class="set-selection">
@@ -413,6 +529,7 @@ class MathFacts {
 
   startGame() {
     this.gameStarted = true;
+    this.updateDebugPanel();
     this.generateNewQuestion();
   }
 
@@ -422,11 +539,54 @@ class MathFacts {
       return;
     }
 
-    const questionData = this.questionSets[this.currentSet].generate();
-    this.currentQuestion = questionData.question;
-    this.currentAnswer = questionData.answer;
+    // Try to select a struggle question first
+    const struggleQuestion = this.selectQuestionByStruggle();
+
+    if (struggleQuestion) {
+      // Use struggle question
+      this.currentQuestion = struggleQuestion.question;
+      // Parse the answer from the stored question
+      this.currentAnswer = this.parseAnswerFromQuestion(struggleQuestion.question);
+      console.log(`Using struggle question: ${this.currentQuestion} = ${this.currentAnswer}`);
+    } else {
+      // Generate random question
+      const questionData = this.questionSets[this.currentSet].generate();
+      this.currentQuestion = questionData.question;
+      this.currentAnswer = questionData.answer;
+      console.log(`Using random question: ${this.currentQuestion} = ${this.currentAnswer}`);
+    }
 
     this.showQuestion();
+  }
+
+  // Parse answer from stored question string
+  parseAnswerFromQuestion(questionStr) {
+    // For struggle questions, we need to recalculate the answer
+    // since we only store the question text
+    const parts = questionStr.split(/[\s\u00d7\u00f7\+\-√&radic;]+/).filter(Boolean);
+
+    if (questionStr.includes('×')) {
+      return parseInt(parts[0]) * parseInt(parts[1]);
+    } else if (questionStr.includes('+')) {
+      return parseInt(parts[0]) + parseInt(parts[1]);
+    } else if (questionStr.includes('-')) {
+      return parseInt(parts[0]) - parseInt(parts[1]);
+    } else if (questionStr.includes('÷')) {
+      const dividend = parseInt(parts[0]);
+      const divisor = parseInt(parts[1]);
+
+      // Check if this is a fraction division problem
+      if (this.currentSet === 'divisionFractions') {
+        return MathFacts.formatFraction(dividend, divisor);
+      } else {
+        return dividend / divisor;
+      }
+    } else if (questionStr.includes('√') || questionStr.includes('&radic;')) {
+      const num = parseInt(parts[0]);
+      return Math.sqrt(num);
+    }
+
+    return 0; // Fallback
   }
 
   showQuestion() {
@@ -499,6 +659,10 @@ class MathFacts {
     if (isCorrect) {
       this.correctAnswers++;
       this.playCorrectSound();
+
+      // Remove from struggle list if mastered (correct and fast)
+      this.removeFromStruggleList(this.currentQuestion, isCorrect, isSlow);
+
       // Track slow but correct answers
       if (isSlow) {
         this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'slow', thinkingTime);
@@ -511,6 +675,7 @@ class MathFacts {
     }
 
     this.updateHistory(this.currentQuestion, isCorrect, thinkingTime);
+    this.updateDebugPanel();
     this.totalQuestions++;
     this.generateNewQuestion();
   }
