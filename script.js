@@ -51,6 +51,7 @@ class MathFacts {
       multiplication: {
         name: 'Multiplication Facts',
         description: 'Practice multiplication up to 12×12',
+        slowTimeLimit: 5000, // 5 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 12) + 1;
           const num2 = Math.floor(Math.random() * 12) + 1;
@@ -63,6 +64,7 @@ class MathFacts {
       addition: {
         name: 'Addition Facts',
         description: 'Practice addition with addends up to 20',
+        slowTimeLimit: 3000, // 3 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 20) + 1;
           const num2 = Math.floor(Math.random() * 20) + 1;
@@ -75,6 +77,7 @@ class MathFacts {
       subtraction: {
         name: 'Subtraction Facts',
         description: 'Practice subtraction (0-20, no negative results)',
+        slowTimeLimit: 4000, // 4 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 20) + 1;
           const num2 = Math.floor(Math.random() * num1) + 0; // Ensures non-negative result
@@ -87,6 +90,7 @@ class MathFacts {
       subtractionNegative: {
         name: 'Subtraction with Negatives',
         description: 'Practice subtraction (0-20, including negative results)',
+        slowTimeLimit: 6000, // 6 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 21); // 0-20
           const num2 = Math.floor(Math.random() * 21); // 0-20
@@ -99,6 +103,7 @@ class MathFacts {
       division: {
         name: 'Division Facts',
         description: 'Practice division (up to 144, whole number results only)',
+        slowTimeLimit: 6000, // 6 seconds
         generate: () => {
           // Create division problems with whole number results
           // First generate the quotient and divisor, then calculate dividend
@@ -115,6 +120,7 @@ class MathFacts {
       divisionFractions: {
         name: 'Division with Fractions',
         description: 'Practice division with fraction and mixed number results',
+        slowTimeLimit: 8000, // 8 seconds
         generate: () => {
           // Generate division problems that result in fractions or mixed numbers
           const dividend = Math.floor(Math.random() * 20) + 1; // 1-20
@@ -252,13 +258,26 @@ class MathFacts {
   
   updateHistory(question, isCorrect, thinkingTime) {
     const emoji = isCorrect ? '😊' : '😞';
-    const hourglassEmoji = thinkingTime > 4000 ? ' ⏳' : '';
-    const historyItem = { text: `${question} ${emoji}${hourglassEmoji}`, correct: isCorrect };
+    const slowTimeLimit = this.questionSets[this.currentSet].slowTimeLimit;
+    const isSlow = thinkingTime > slowTimeLimit;
+    const hourglassEmoji = isSlow ? ' ⏳' : '';
+    const historyItem = { 
+      text: `${question} ${emoji}${hourglassEmoji}`, 
+      correct: isCorrect, 
+      slow: isSlow 
+    };
     this.questionHistory.push(historyItem);
     
     this.historyDisplay.innerHTML = this.questionHistory
       .map(item => {
-        const className = item.correct ? 'history-item history-correct' : 'history-item history-incorrect';
+        let className = 'history-item';
+        if (item.correct && item.slow) {
+          className += ' history-correct-slow';
+        } else if (item.correct) {
+          className += ' history-correct';
+        } else {
+          className += ' history-incorrect';
+        }
         return `<span class="${className}">${item.text}</span>`;
       })
       .join('');

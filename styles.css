@@ -226,6 +226,10 @@ body {
   background-color: rgba(46, 204, 113, 0.3);
 }
 
+.history-correct-slow {
+  background-color: rgba(241, 196, 15, 0.3);
+}
+
 .history-incorrect {
   background-color: rgba(231, 76, 60, 0.3);
 }
