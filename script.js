@@ -48,13 +48,34 @@ class MathFacts {
     this.questionHistory = [];
     this.currentSet = null;
     this.questionSets = {
+      squares: {
+        name: 'Square Numbers',
+        description: 'Practice multiplication and roots of square numbers',
+        slowTimeLimit: 4000, // 4 seconds,
+        generate: () => {
+          const num1 = Math.floor(Math.random() * 13) + 1;
+
+          if (Math.random() > 0.6) { // square
+            return {
+              question: `${num1} × ${num1}`,
+              answer: num1 * num1
+            }
+          } else {
+            return {
+              question: `&radic; ${num1 * num1}`,
+              answer: num1
+            }
+
+          }
+        }
+      },
       multiplication: {
         name: 'Multiplication Facts',
-        description: 'Practice multiplication up to 12×12',
+        description: 'Practice multiplication up to 13×13',
         slowTimeLimit: 5000, // 5 seconds
         generate: () => {
-          const num1 = Math.floor(Math.random() * 12) + 1;
-          const num2 = Math.floor(Math.random() * 12) + 1;
+          const num1 = Math.floor(Math.random() * 13) + 1;
+          const num2 = Math.floor(Math.random() * 13) + 1;
           return {
             question: `${num1} × ${num2}`,
             answer: num1 * num2
@@ -110,7 +131,7 @@ class MathFacts {
           const quotient = Math.floor(Math.random() * 12) + 1; // 1-12
           const divisor = Math.floor(Math.random() * 12) + 1;   // 1-12
           const dividend = quotient * divisor; // This ensures whole number result
-          
+
           return {
             question: `${dividend} ÷ ${divisor}`,
             answer: quotient
@@ -125,9 +146,9 @@ class MathFacts {
           // Generate division problems that result in fractions or mixed numbers
           const dividend = Math.floor(Math.random() * 20) + 1; // 1-20
           const divisor = Math.floor(Math.random() * 20) + 1;   // 1-20
-          
+
           const answer = MathFacts.formatFraction(dividend, divisor);
-          
+
           return {
             question: `${dividend} ÷ ${divisor}`,
             answer: answer
@@ -135,7 +156,7 @@ class MathFacts {
         }
       }
     };
-    
+
     this.correctAnswers = 0;
     this.incorrectAnswers = 0;
     this.totalQuestions = 0;
@@ -145,7 +166,7 @@ class MathFacts {
     this.gameComplete = false;
     this.gameStarted = false;
     this.setSelected = false;
-    
+
     this.initializeLocalStorage();
     this.showSetSelection();
     this.setupEventListeners();
@@ -154,11 +175,11 @@ class MathFacts {
   // Initialize local storage for tracking problematic questions
   initializeLocalStorage() {
     this.storageKey = 'mathFactsProblematicQuestions';
-    
+
     // Load existing data or create new structure
     const stored = localStorage.getItem(this.storageKey);
     this.problematicQuestions = stored ? JSON.parse(stored) : {};
-    
+
     // Ensure all game types have entries
     Object.keys(this.questionSets).forEach(gameType => {
       if (!this.problematicQuestions[gameType]) {
@@ -168,7 +189,7 @@ class MathFacts {
         };
       }
     });
-    
+
     this.saveProblematicQuestions();
   }
 
@@ -180,11 +201,11 @@ class MathFacts {
   // Add a question to the problematic list
   addProblematicQuestion(gameType, question, type, thinkingTime = null) {
     const questionKey = question.replace(/\s/g, ''); // Remove spaces for consistent keys
-    
+
     if (!this.problematicQuestions[gameType]) {
       this.problematicQuestions[gameType] = { wrong: {}, slow: {} };
     }
-    
+
     if (!this.problematicQuestions[gameType][type][questionKey]) {
       this.problematicQuestions[gameType][type][questionKey] = {
         question: question,
@@ -193,11 +214,11 @@ class MathFacts {
         times: []
       };
     }
-    
+
     const entry = this.problematicQuestions[gameType][type][questionKey];
     entry.count++;
     entry.lastSeen = new Date().toISOString();
-    
+
     if (thinkingTime !== null) {
       entry.times.push(thinkingTime);
       // Keep only the last 10 times to prevent unlimited growth
@@ -205,7 +226,7 @@ class MathFacts {
         entry.times = entry.times.slice(-10);
       }
     }
-    
+
     this.saveProblematicQuestions();
   }
 
@@ -214,11 +235,11 @@ class MathFacts {
     if (!this.problematicQuestions[gameType]) {
       return {};
     }
-    
+
     if (type) {
       return this.problematicQuestions[gameType][type] || {};
     }
-    
+
     return this.problematicQuestions[gameType];
   }
 
@@ -244,27 +265,31 @@ class MathFacts {
         <div class="button-grid">
           <button class="set-button" onclick="mathFacts.selectSet('multiplication')">
             🔢 Multiplication Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Practice multiplication up to 12×12</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.multiplication.description}</div>
           </button>
           <button class="set-button" onclick="mathFacts.selectSet('addition')">
             ➕ Addition Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Practice addition with addends up to 20</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.addition.description}</div>
           </button>
           <button class="set-button" onclick="mathFacts.selectSet('subtraction')">
             ➖ Subtraction Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Practice subtraction (0-20, no negative results)</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.subtraction.description}</div>
           </button>
           <button class="set-button" onclick="mathFacts.selectSet('subtractionNegative')">
             ➖ Subtraction with Negatives
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Practice subtraction (0-20, including negative results)</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.subtractionNegative.description}</div>
           </button>
           <button class="set-button" onclick="mathFacts.selectSet('division')">
             ➗ Division Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Practice division (up to 144, whole number results only)</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.division.description}</div>
           </button>
           <button class="set-button" onclick="mathFacts.selectSet('divisionFractions')">
             ➗ Division with Fractions
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">Practice division with fraction and mixed number results</div>
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.divisionFractions.description}</div>
+          </button>
+          <button class="set-button" onclick="mathFacts.selectSet('squares')">
+            ⊞ Squares
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.squares.description}</div>
           </button>
         </div>
       </div>
@@ -272,13 +297,13 @@ class MathFacts {
     this.instruction.textContent = "Select a practice set to begin";
     this.hideAllControls();
   }
-  
+
   selectSet(setName) {
     this.currentSet = setName;
     this.setSelected = true;
     this.showWelcome();
   }
-  
+
   showWelcome() {
     const setInfo = this.questionSets[this.currentSet];
     this.mathDisplay.innerHTML = `
@@ -293,27 +318,27 @@ class MathFacts {
     `;
     this.updateInstructions();
   }
-  
+
   startGame() {
     this.gameStarted = true;
     this.generateNewQuestion();
   }
-  
+
   generateNewQuestion() {
     if (this.totalQuestions >= this.maxQuestions) {
       this.showResults();
       return;
     }
-    
+
     const questionData = this.questionSets[this.currentSet].generate();
     this.currentQuestion = questionData.question;
     this.currentAnswer = questionData.answer;
-    
+
     this.showQuestion();
   }
 
   showQuestion() {
-    this.mathDisplay.textContent = this.currentQuestion;
+    this.mathDisplay.innerHTML = this.currentQuestion;
     this.mathDisplay.className = 'math-display question';
     this.showingAnswer = false;
     this.questionStartTime = Date.now();
@@ -334,26 +359,26 @@ class MathFacts {
     const remaining = this.maxQuestions - this.totalQuestions;
     const correctClass = this.correctAnswers > 0 ? 'progress-correct' : '';
     const incorrectClass = this.incorrectAnswers > 0 ? 'progress-incorrect' : '';
-    
+
     this.progressCounter.innerHTML = `
-      <span class="${correctClass}">✓ ${this.correctAnswers}</span> | 
-      <span class="${incorrectClass}">✗ ${this.incorrectAnswers}</span> | 
+      <span class="${correctClass}">✓ ${this.correctAnswers}</span> |
+      <span class="${incorrectClass}">✗ ${this.incorrectAnswers}</span> |
       Remaining: ${remaining}
     `;
   }
-  
+
   updateHistory(question, isCorrect, thinkingTime) {
     const emoji = isCorrect ? '😊' : '😞';
     const slowTimeLimit = this.questionSets[this.currentSet].slowTimeLimit;
     const isSlow = thinkingTime > slowTimeLimit;
     const hourglassEmoji = isSlow ? ' ⏳' : '';
-    const historyItem = { 
-      text: `${question} ${emoji}${hourglassEmoji}`, 
-      correct: isCorrect, 
-      slow: isSlow 
+    const historyItem = {
+      text: `${question} ${emoji}${hourglassEmoji}`,
+      correct: isCorrect,
+      slow: isSlow
     };
     this.questionHistory.push(historyItem);
-    
+
     this.historyDisplay.innerHTML = this.questionHistory
       .map(item => {
         let className = 'history-item';
@@ -368,17 +393,17 @@ class MathFacts {
       })
       .join('');
   }
-  
+
   recordAnswer(isCorrect) {
     let thinkingTime = 0;
     if (this.questionStartTime) {
       thinkingTime = Date.now() - this.questionStartTime;
       this.totalThinkingTime += thinkingTime;
     }
-    
+
     const slowTimeLimit = this.questionSets[this.currentSet].slowTimeLimit;
     const isSlow = thinkingTime > slowTimeLimit;
-    
+
     if (isCorrect) {
       this.correctAnswers++;
       // Track slow but correct answers
@@ -391,12 +416,12 @@ class MathFacts {
       // Track wrong answers
       this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'wrong', thinkingTime);
     }
-    
+
     this.updateHistory(this.currentQuestion, isCorrect, thinkingTime);
     this.totalQuestions++;
     this.generateNewQuestion();
   }
-  
+
   playSound(soundFile) {
     const audio = new Audio(soundFile);
     if (soundFile === 'wrong.mp3') {
@@ -404,13 +429,13 @@ class MathFacts {
     }
     audio.play().catch(e => console.log('Could not play sound:', e));
   }
-  
+
   showResults() {
     this.gameComplete = true;
     const totalTimeSeconds = (this.totalThinkingTime / 1000).toFixed(1);
     const percentage = Math.round((this.correctAnswers / this.totalQuestions) * 100);
     const isExcellent = percentage >= 90;
-    
+
     let resultsHTML = `
       <div class="results">
         <div class="results-title">Results</div>
@@ -418,27 +443,27 @@ class MathFacts {
         <div class="results-stats incorrect-stat">Incorrect: ${this.incorrectAnswers}</div>
         <div class="results-stats time-stat">Total thinking time: ${totalTimeSeconds}s</div>
         <div class="results-stats">Score: ${percentage}%</div>`;
-    
+
     if (isExcellent) {
       resultsHTML += `<div class="celebration">🎉 Excellent! 🎉</div>`;
       this.playSound('celebration.mp3');
     }
-    
+
     resultsHTML += `</div>`;
-    
+
     this.mathDisplay.innerHTML = resultsHTML;
     this.progressCounter.style.display = 'none';
     this.hideAllControls();
     this.instruction.innerHTML = "Press <span class='keycap' onclick='mathFacts.restart()'>R</span> to restart";
   }
-  
+
   hideAllControls() {
     this.welcomeControls.style.display = 'none';
     this.controls.style.display = 'none';
     this.questionControls.style.display = 'none';
     this.quitButton.style.display = 'none';
   }
-  
+
   updateInstructions() {
     if (!this.setSelected) {
       this.instruction.textContent = "Select a practice set to begin";
@@ -474,7 +499,7 @@ class MathFacts {
       this.quitButton.style.display = 'block';
     }
   }
-  
+
   restart() {
     this.correctAnswers = 0;
     this.incorrectAnswers = 0;
@@ -501,11 +526,11 @@ class MathFacts {
         }
         return;
       }
-      
+
       if (!this.setSelected) {
         return;
       }
-      
+
       if (!this.gameStarted) {
         if (event.code === 'Space') {
           event.preventDefault();
@@ -513,22 +538,22 @@ class MathFacts {
         }
         return;
       }
-      
+
       if (event.code === 'Space') {
         event.preventDefault();
-        
+
         if (!this.showingAnswer) {
           this.showAnswer();
         }
       } else if (event.code === 'KeyY') {
         event.preventDefault();
-        
+
         if (this.showingAnswer) {
           this.recordAnswer(true);
         }
       } else if (event.code === 'KeyN') {
         event.preventDefault();
-        
+
         if (this.showingAnswer) {
           this.recordAnswer(false);
         }
@@ -537,7 +562,7 @@ class MathFacts {
         this.showResults();
       }
     });
-    
+
     // Add click handler for quit button
     this.quitButton.addEventListener('click', () => {
       this.showResults();
