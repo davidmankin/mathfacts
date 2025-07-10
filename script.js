@@ -45,6 +45,9 @@ class MathFacts {
     this.welcomeControls = document.getElementById('welcomeControls');
     this.questionControls = document.getElementById('questionControls');
     this.quitButton = document.getElementById('quitButton');
+    this.soundToggle = document.getElementById('soundToggle');
+    this.clearStateButton = document.getElementById('clearStateButton');
+    this.checkmarkAnimation = document.getElementById('checkmarkAnimation');
     this.questionHistory = [];
     this.currentSet = null;
     this.questionSets = {
@@ -166,9 +169,12 @@ class MathFacts {
     this.gameComplete = false;
     this.gameStarted = false;
     this.setSelected = false;
+    this.soundEnabled = true;
 
     this.initializeCorrectSounds();
     this.initializeLocalStorage();
+    this.setupSoundToggle();
+    this.setupClearState();
     this.showSetSelection();
     this.setupEventListeners();
   }
@@ -176,16 +182,19 @@ class MathFacts {
   // Initialize correct answer sounds with volume settings
   initializeCorrectSounds() {
     this.correctSounds = [
-      { file: 'correct1.mp3', volume: 0.8 },
-      { file: 'correct2.mp3', volume: 0.6 },
-      { file: 'correct3.mp3', volume: 0.7 },
-      { file: 'correct4.mp3', volume: 0.9 },
-      { file: 'correct5.mp3', volume: 0.5 },
-      { file: 'cheer.mp3', volume: 0.4 },
-      { file: 'ding.mp3', volume: 0.8 },
-      { file: 'success.mp3', volume: 0.7 },
-      { file: 'yay.mp3', volume: 0.6 },
-      { file: 'woohoo.mp3', volume: 0.8 }
+
+      { file: 'sounds/4-bing-things-82661.mp3', volume: 1.0 },
+      { file: 'sounds/alert-sound-87478.mp3', volume: 1.0 },
+      { file: 'sounds/belch-155023.mp3', volume: 0.7 },
+      { file: 'sounds/bing-298405.mp3', volume: 1.0 },
+      { file: 'sounds/cow_bells_01-98236.mp3', volume: 1.0 },
+      { file: 'sounds/din-ding-89718.mp3', volume: 1.0 },
+      { file: 'sounds/elevator_ping_02-40404.mp3', volume: 1.0 },
+      { file: 'sounds/mission-success-41211.mp3', volume: 1.0 },
+      { file: 'sounds/notification-sound-269266.mp3', volume: 1.0 },
+      { file: 'sounds/short-success-sound-glockenspiel-treasure-video-game-6346.mp3', volume: 1.0 },
+      { file: 'sounds/success-221935.mp3', volume: 1.0 },
+      { file: 'sounds/win-176035.mp3', volume: 1.0 },
     ];
   }
 
@@ -272,6 +281,72 @@ class MathFacts {
   viewStoredData() {
     console.log('Stored problematic questions:', this.problematicQuestions);
     return this.problematicQuestions;
+  }
+
+  // Setup sound toggle functionality
+  setupSoundToggle() {
+    this.soundToggle.addEventListener('click', () => {
+      this.toggleSound();
+    });
+    this.updateSoundToggleDisplay();
+  }
+
+  // Toggle sound on/off
+  toggleSound() {
+    this.soundEnabled = !this.soundEnabled;
+    this.updateSoundToggleDisplay();
+    console.log(`Sound ${this.soundEnabled ? 'enabled' : 'disabled'}`);
+  }
+
+  // Update sound toggle button appearance
+  updateSoundToggleDisplay() {
+    if (this.soundEnabled) {
+      this.soundToggle.textContent = '🔊';
+      this.soundToggle.classList.remove('muted');
+    } else {
+      this.soundToggle.textContent = '🔇';
+      this.soundToggle.classList.add('muted');
+    }
+  }
+
+  // Setup clear state functionality
+  setupClearState() {
+    let clickCount = 0;
+    let clickTimer = null;
+
+    this.clearStateButton.addEventListener('click', () => {
+      clickCount++;
+
+      if (clickCount === 1) {
+        clickTimer = setTimeout(() => {
+          clickCount = 0;
+        }, 500); // Reset if second click doesn't come within 500ms
+      } else if (clickCount === 2) {
+        clearTimeout(clickTimer);
+        clickCount = 0;
+        this.clearAllState();
+      }
+    });
+  }
+
+  // Clear all local storage state
+  clearAllState() {
+    console.log('Clearing all local storage state...');
+    localStorage.removeItem(this.storageKey);
+    this.problematicQuestions = {};
+    this.initializeLocalStorage();
+
+    // Show animated checkmark
+    this.showCheckmarkAnimation();
+    console.log('Local storage state cleared successfully');
+  }
+
+  // Show animated checkmark
+  showCheckmarkAnimation() {
+    this.checkmarkAnimation.classList.add('show');
+    setTimeout(() => {
+      this.checkmarkAnimation.classList.remove('show');
+    }, 1000);
   }
 
   showSetSelection() {
@@ -430,7 +505,7 @@ class MathFacts {
       }
     } else {
       this.incorrectAnswers++;
-      this.playSound('wrong.mp3', 0.3);
+      this.playSound('sounds/wrong.mp3', 0.3);
       // Track wrong answers
       this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'wrong', thinkingTime);
     }
@@ -441,6 +516,9 @@ class MathFacts {
   }
 
   playSound(soundFile, volume = 1.0) {
+    if (!this.soundEnabled) {
+      return;
+    }
     const audio = new Audio(soundFile);
     audio.volume = volume;
     audio.play().catch(e => console.log('Could not play sound:', e));
@@ -448,12 +526,13 @@ class MathFacts {
 
   // Play a random correct answer sound
   playCorrectSound() {
-    if (this.correctSounds.length === 0) {
+    if (!this.soundEnabled || this.correctSounds.length === 0) {
       return;
     }
-    
+
     const randomIndex = Math.floor(Math.random() * this.correctSounds.length);
     const soundConfig = this.correctSounds[randomIndex];
+    console.log( `Playing ${soundConfig.file} at ${soundConfig.volume * 100.0}%`);
     this.playSound(soundConfig.file, soundConfig.volume);
   }
 
@@ -473,7 +552,7 @@ class MathFacts {
 
     if (isExcellent) {
       resultsHTML += `<div class="celebration">🎉 Excellent! 🎉</div>`;
-      this.playSound('celebration.mp3', 1.0);
+      this.playSound('sounds/celebration.mp3', 1.0);
     }
 
     resultsHTML += `</div>`;
@@ -587,6 +666,12 @@ class MathFacts {
       } else if (event.code === 'KeyQ') {
         event.preventDefault();
         this.showResults();
+      } else if (event.code === 'KeyM') {
+        event.preventDefault();
+        this.toggleSound();
+      } else if (event.code === 'KeyR' && event.shiftKey) {
+        event.preventDefault();
+        this.clearAllState();
       }
     });
 

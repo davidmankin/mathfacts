@@ -13,4 +13,4 @@ GUIDELINES
 ============
 1. We want this to work in a browser and on an ipad.
 2. Make sure every change works with just touch targets and also with just keyboard
-3. After every change, git commit with a brief description of the changes.
+3. After every change, display to me a good commit message to use for its git commits
