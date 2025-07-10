@@ -146,8 +146,94 @@ class MathFacts {
     this.gameStarted = false;
     this.setSelected = false;
     
+    this.initializeLocalStorage();
     this.showSetSelection();
     this.setupEventListeners();
+  }
+
+  // Initialize local storage for tracking problematic questions
+  initializeLocalStorage() {
+    this.storageKey = 'mathFactsProblematicQuestions';
+    
+    // Load existing data or create new structure
+    const stored = localStorage.getItem(this.storageKey);
+    this.problematicQuestions = stored ? JSON.parse(stored) : {};
+    
+    // Ensure all game types have entries
+    Object.keys(this.questionSets).forEach(gameType => {
+      if (!this.problematicQuestions[gameType]) {
+        this.problematicQuestions[gameType] = {
+          wrong: {},
+          slow: {}
+        };
+      }
+    });
+    
+    this.saveProblematicQuestions();
+  }
+
+  // Save problematic questions to local storage
+  saveProblematicQuestions() {
+    localStorage.setItem(this.storageKey, JSON.stringify(this.problematicQuestions));
+  }
+
+  // Add a question to the problematic list
+  addProblematicQuestion(gameType, question, type, thinkingTime = null) {
+    const questionKey = question.replace(/\s/g, ''); // Remove spaces for consistent keys
+    
+    if (!this.problematicQuestions[gameType]) {
+      this.problematicQuestions[gameType] = { wrong: {}, slow: {} };
+    }
+    
+    if (!this.problematicQuestions[gameType][type][questionKey]) {
+      this.problematicQuestions[gameType][type][questionKey] = {
+        question: question,
+        count: 0,
+        lastSeen: null,
+        times: []
+      };
+    }
+    
+    const entry = this.problematicQuestions[gameType][type][questionKey];
+    entry.count++;
+    entry.lastSeen = new Date().toISOString();
+    
+    if (thinkingTime !== null) {
+      entry.times.push(thinkingTime);
+      // Keep only the last 10 times to prevent unlimited growth
+      if (entry.times.length > 10) {
+        entry.times = entry.times.slice(-10);
+      }
+    }
+    
+    this.saveProblematicQuestions();
+  }
+
+  // Get problematic questions for a specific game
+  getProblematicQuestions(gameType, type = null) {
+    if (!this.problematicQuestions[gameType]) {
+      return {};
+    }
+    
+    if (type) {
+      return this.problematicQuestions[gameType][type] || {};
+    }
+    
+    return this.problematicQuestions[gameType];
+  }
+
+  // Clear problematic questions for a game type
+  clearProblematicQuestions(gameType) {
+    if (this.problematicQuestions[gameType]) {
+      this.problematicQuestions[gameType] = { wrong: {}, slow: {} };
+      this.saveProblematicQuestions();
+    }
+  }
+
+  // Debug method to view all stored data
+  viewStoredData() {
+    console.log('Stored problematic questions:', this.problematicQuestions);
+    return this.problematicQuestions;
   }
 
   showSetSelection() {
@@ -290,11 +376,20 @@ class MathFacts {
       this.totalThinkingTime += thinkingTime;
     }
     
+    const slowTimeLimit = this.questionSets[this.currentSet].slowTimeLimit;
+    const isSlow = thinkingTime > slowTimeLimit;
+    
     if (isCorrect) {
       this.correctAnswers++;
+      // Track slow but correct answers
+      if (isSlow) {
+        this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'slow', thinkingTime);
+      }
     } else {
       this.incorrectAnswers++;
       this.playSound('wrong.mp3');
+      // Track wrong answers
+      this.addProblematicQuestion(this.currentSet, this.currentQuestion, 'wrong', thinkingTime);
     }
     
     this.updateHistory(this.currentQuestion, isCorrect, thinkingTime);
