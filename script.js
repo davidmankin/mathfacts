@@ -71,6 +71,15 @@ class MathFacts {
             }
 
           }
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s\u00d7√&radic;]+/).filter(Boolean);
+          if (questionStr.includes('×')) {
+            return parseInt(parts[0]) * parseInt(parts[1]);
+          } else if (questionStr.includes('√') || questionStr.includes('&radic;')) {
+            return Math.sqrt(parseInt(parts[0]));
+          }
+          return 0;
         }
       },
       multiplication: {
@@ -84,12 +93,16 @@ class MathFacts {
             question: `${num1} × ${num2}`,
             answer: num1 * num2
           };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s×]+/).filter(Boolean);
+          return parseInt(parts[0]) * parseInt(parts[1]);
         }
       },
       addition: {
         name: 'Addition Facts',
         description: 'Practice addition with addends up to 20',
-        slowTimeLimit: 3000, // 3 seconds
+        slowTimeLimit: 5000, // 5 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 20) + 1;
           const num2 = Math.floor(Math.random() * 20) + 1;
@@ -97,6 +110,10 @@ class MathFacts {
             question: `${num1} + ${num2}`,
             answer: num1 + num2
           };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s+]+/).filter(Boolean);
+          return parseInt(parts[0]) + parseInt(parts[1]);
         }
       },
       subtraction: {
@@ -110,6 +127,10 @@ class MathFacts {
             question: `${num1} - ${num2}`,
             answer: num1 - num2
           };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s-]+/).filter(Boolean);
+          return parseInt(parts[0]) - parseInt(parts[1]);
         }
       },
       subtractionNegative: {
@@ -123,6 +144,10 @@ class MathFacts {
             question: `${num1} - ${num2}`,
             answer: num1 - num2
           };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s-]+/).filter(Boolean);
+          return parseInt(parts[0]) - parseInt(parts[1]);
         }
       },
       division: {
@@ -140,6 +165,10 @@ class MathFacts {
             question: `${dividend} ÷ ${divisor}`,
             answer: quotient
           };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s÷]+/).filter(Boolean);
+          return parseInt(parts[0]) / parseInt(parts[1]);
         }
       },
       divisionFractions: {
@@ -157,6 +186,43 @@ class MathFacts {
             question: `${dividend} ÷ ${divisor}`,
             answer: answer
           };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s÷]+/).filter(Boolean);
+          const dividend = parseInt(parts[0]);
+          const divisor = parseInt(parts[1]);
+          return MathFacts.formatFraction(dividend, divisor);
+        }
+      },
+      subatizing: {
+        name: 'Subatizing',
+        description: 'Practice subatizing up to ten.  2 second time limit!',
+        slowTimeLimit: 2000, // 2 seconds
+        generate: () => {
+          const answer = Math.floor(Math.random() * 10) + 1; // 1-10
+          const pre = '<pre style="text-wrap: auto; display: inline-block; margin-left: 2rem; marting-right: 2rem;">';
+          console.log("Generating ", answer, " for subatizing")
+          if (Math.random() < 0.5) {  // Evenly spaced
+            return {
+              question: pre + `&#9711; `.repeat(answer) + `</pre>`,
+              answer: answer
+            };
+          } else {  // Random spacing
+            var question = pre;
+            for (var i = 0; i < answer; i++) {
+              question += "&#9711;" + " ".repeat(Math.floor(Math.random() * 4));
+            }
+            question += '</pre>';
+            return {
+              question: question,
+              answer: answer
+            };
+          }
+        },
+        parseAnswer: (questionStr) => {
+          // Count the number of circles (&#9711;) in the HTML
+          const circleMatches = questionStr.match(/&#9711;/g);
+          return circleMatches ? circleMatches.length : 0;
         }
       }
     };
@@ -172,6 +238,7 @@ class MathFacts {
     this.setSelected = false;
     this.soundEnabled = true;
     this.previousQuestion = null;
+    this.debugPanelVisible = false;
 
     this.initializeCorrectSounds();
     this.initializeLocalStorage();
@@ -389,8 +456,8 @@ class MathFacts {
     }
 
     // Filter out the previous question to avoid repetition
-    const filteredQuestions = this.previousQuestion ? 
-      struggleQuestions.filter(q => q.question !== this.previousQuestion) : 
+    const filteredQuestions = this.previousQuestion ?
+      struggleQuestions.filter(q => q.question !== this.previousQuestion) :
       struggleQuestions;
 
     // If we filtered out all questions (only one struggle question and it was the previous one),
@@ -447,9 +514,16 @@ class MathFacts {
     this.updateDebugPanel();
   }
 
+  // Toggle debug panel visibility
+  toggleDebugPanel() {
+    this.debugPanelVisible = !this.debugPanelVisible;
+    console.log(`Debug panel ${this.debugPanelVisible ? 'shown' : 'hidden'}`);
+    this.updateDebugPanel();
+  }
+
   // Update debug panel display
   updateDebugPanel() {
-    if (!this.gameStarted || !this.currentSet) {
+    if (!this.debugPanelVisible || !this.gameStarted || !this.currentSet) {
       this.debugPanel.classList.add('hidden');
       return;
     }
@@ -512,6 +586,10 @@ class MathFacts {
             ⊞ Squares
             <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.squares.description}</div>
           </button>
+          <button class="set-button" onclick="mathFacts.selectSet('subatizing')">
+            &#8759; Subatizing
+            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.subatizing.description}</div>
+          </button>
         </div>
       </div>
     `;
@@ -558,8 +636,8 @@ class MathFacts {
     if (struggleQuestion) {
       // Use struggle question
       this.currentQuestion = struggleQuestion.question;
-      // Parse the answer from the stored question
-      this.currentAnswer = this.parseAnswerFromQuestion(struggleQuestion.question);
+      // Parse the answer using the question set's parseAnswer method
+      this.currentAnswer = this.questionSets[this.currentSet].parseAnswer(struggleQuestion.question);
       console.log(`Using struggle question: ${this.currentQuestion} = ${this.currentAnswer}`);
     } else {
       // Generate random question
@@ -574,35 +652,6 @@ class MathFacts {
     this.showQuestion();
   }
 
-  // Parse answer from stored question string
-  parseAnswerFromQuestion(questionStr) {
-    // For struggle questions, we need to recalculate the answer
-    // since we only store the question text
-    const parts = questionStr.split(/[\s\u00d7\u00f7\+\-√&radic;]+/).filter(Boolean);
-
-    if (questionStr.includes('×')) {
-      return parseInt(parts[0]) * parseInt(parts[1]);
-    } else if (questionStr.includes('+')) {
-      return parseInt(parts[0]) + parseInt(parts[1]);
-    } else if (questionStr.includes('-')) {
-      return parseInt(parts[0]) - parseInt(parts[1]);
-    } else if (questionStr.includes('÷')) {
-      const dividend = parseInt(parts[0]);
-      const divisor = parseInt(parts[1]);
-
-      // Check if this is a fraction division problem
-      if (this.currentSet === 'divisionFractions') {
-        return MathFacts.formatFraction(dividend, divisor);
-      } else {
-        return dividend / divisor;
-      }
-    } else if (questionStr.includes('√') || questionStr.includes('&radic;')) {
-      const num = parseInt(parts[0]);
-      return Math.sqrt(num);
-    }
-
-    return 0; // Fallback
-  }
 
   showQuestion() {
     this.mathDisplay.innerHTML = this.currentQuestion;
@@ -796,6 +845,7 @@ class MathFacts {
     this.setSelected = false;
     this.currentSet = null;
     this.previousQuestion = null;
+    this.debugPanelVisible = false;
     this.questionHistory = [];
     this.historyDisplay.innerHTML = '';
     this.progressCounter.innerHTML = '';
@@ -853,6 +903,9 @@ class MathFacts {
       } else if (event.code === 'KeyR' && event.shiftKey) {
         event.preventDefault();
         this.clearAllState();
+      } else if (event.code === 'KeyD' && event.shiftKey) {
+        event.preventDefault();
+        this.toggleDebugPanel();
       }
     });
 
