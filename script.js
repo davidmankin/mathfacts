@@ -55,6 +55,8 @@ class MathFacts {
       squares: {
         name: 'Square Numbers',
         description: 'Practice multiplication and roots of square numbers',
+        emoji: '⊞',
+        displayName: 'Squares',
         slowTimeLimit: 4000, // 4 seconds,
         generate: () => {
           const num1 = Math.floor(Math.random() * 13) + 1;
@@ -85,6 +87,8 @@ class MathFacts {
       multiplication: {
         name: 'Multiplication Facts',
         description: 'Practice multiplication up to 13×13',
+        emoji: '❎',
+        displayName: 'Multiplication Facts',
         slowTimeLimit: 5000, // 5 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 13) + 1;
@@ -102,6 +106,8 @@ class MathFacts {
       addition: {
         name: 'Addition Facts',
         description: 'Practice addition with addends up to 20',
+        emoji: '➕',
+        displayName: 'Addition Facts',
         slowTimeLimit: 5000, // 5 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 20) + 1;
@@ -119,6 +125,8 @@ class MathFacts {
       subtraction: {
         name: 'Subtraction Facts',
         description: 'Practice subtraction (0-20, no negative results)',
+        emoji: '➖',
+        displayName: 'Subtraction Facts',
         slowTimeLimit: 4000, // 4 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 20) + 1;
@@ -136,6 +144,8 @@ class MathFacts {
       subtractionNegative: {
         name: 'Subtraction with Negatives',
         description: 'Practice subtraction (0-20, including negative results)',
+        emoji: '➖',
+        displayName: 'Subtraction with Negatives',
         slowTimeLimit: 6000, // 6 seconds
         generate: () => {
           const num1 = Math.floor(Math.random() * 21); // 0-20
@@ -153,6 +163,8 @@ class MathFacts {
       division: {
         name: 'Division Facts',
         description: 'Practice division (up to 144, whole number results only)',
+        emoji: '➗',
+        displayName: 'Division Facts',
         slowTimeLimit: 6000, // 6 seconds
         generate: () => {
           // Create division problems with whole number results
@@ -174,6 +186,8 @@ class MathFacts {
       divisionFractions: {
         name: 'Division with Fractions',
         description: 'Practice division with fraction and mixed number results',
+        emoji: '➗',
+        displayName: 'Division with Fractions',
         slowTimeLimit: 8000, // 8 seconds
         generate: () => {
           // Generate division problems that result in fractions or mixed numbers
@@ -197,6 +211,9 @@ class MathFacts {
       subatizing: {
         name: 'Subatizing',
         description: 'Practice subatizing up to ten. Be fast!',
+        emoji: '&#8759;',
+        displayName: 'Subatizing',
+        showInHistory: 'answer', // Show only answer in history
         slowTimeLimit: 4000, // 4 seconds
         generate: () => {
           const answer = Math.floor(Math.random() * 10) + 1; // 1-10
@@ -222,7 +239,69 @@ class MathFacts {
           const circleMatches = questionStr.match(/&#9711;/g);
           return circleMatches ? circleMatches.length : 0;
         }
-      }
+      },
+      binaryToDecimal: {
+        name: 'Binary to Decimal',
+        description: 'Practice converting 4 bit binary to decimal',
+        emoji: '🔟',
+        displayName: 'Binary to Decimal',
+        showInHistory: 'answer', // Show only answer in history
+        slowTimeLimit: 10000, // 10 seconds
+        generate: () => {
+          const num = Math.floor(Math.random() * 16); // 0-15
+          const binary = num.toString(2).padStart(4, '0');
+          const decimal = num.toString(10);
+          console.log("Generating ", binary, " for  ", decimal);
+          // TODO: consider mixing in binary to decimal too
+          return {
+              question: `${binary} in decimal`,
+              answer: decimal
+          };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s]*in (binary|decimal)/).filter(Boolean);
+
+          if (questionStr.match(/in binary/)) {
+            return parseInt(parts[0]).toString(2).padStart(4, '0');
+          } else {
+            return parseInt(parts[0], 2).toString();
+          }
+          // Count the number of circles (&#9711;) in the HTML
+          const circleMatches = questionStr.match(/&#9711;/g);
+          return circleMatches ? circleMatches.length : 0;
+        }
+      },
+      decimalToBinary: {
+        name: 'Decimal to Binary',
+        description: 'Practice converting decimal to 4 bit binary',
+        emoji: '🔢',
+        displayName: 'Decimal to Binary',
+        showInHistory: 'answer', // Show only answer in history
+        slowTimeLimit: 10000, // 10 seconds
+        generate: () => {
+          const num = Math.floor(Math.random() * 16); // 0-15
+          const binary = num.toString(2).padStart(4, '0');
+          const decimal = num.toString(10);
+          console.log("Generating ", binary, " for  ", decimal);
+          // TODO: consider mixing in binary to decimal too
+          return {
+              question: `${decimal} in binary`,
+              answer: binary
+          };
+        },
+        parseAnswer: (questionStr) => {
+          const parts = questionStr.split(/[\s]*in (binary|decimal)/).filter(Boolean);
+
+          if (questionStr.match(/in binary/)) {
+            return parseInt(parts[0]).toString(2).padStart(4, '0');
+          } else {
+            return parseInt(parts[0], 2).toString();
+          }
+          // Count the number of circles (&#9711;) in the HTML
+          const circleMatches = questionStr.match(/&#9711;/g);
+          return circleMatches ? circleMatches.length : 0;
+        }
+      },
     };
 
     this.correctAnswers = 0;
@@ -249,7 +328,6 @@ class MathFacts {
   // Initialize correct answer sounds with volume settings
   initializeCorrectSounds() {
     this.correctSounds = [
-
       { file: 'sounds/4-bing-things-82661.mp3', volume: 1.0 },
       { file: 'sounds/alert-sound-87478.mp3', volume: 1.0 },
       { file: 'sounds/belch-155023.mp3', volume: 0.5 },
@@ -551,43 +629,22 @@ class MathFacts {
   }
 
   showSetSelection() {
+    // Generate buttons dynamically from questionSets
+    const buttonHTML = Object.entries(this.questionSets).map(([key, set]) => {
+      return `
+        <button class="set-button" onclick="mathFacts.selectSet('${key}')">
+          ${set.emoji} ${set.displayName}
+          <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${set.description}</div>
+        </button>
+      `;
+    }).join('');
+
     this.mathDisplay.innerHTML = `
       <div class="set-selection">
         <div class="set-title">Math Facts Practice</div>
         <div style="margin-bottom: 1rem; font-size: 1.2rem; color: #ecf0f1;">Choose your practice set:</div>
         <div class="button-grid">
-          <button class="set-button" onclick="mathFacts.selectSet('multiplication')">
-            🔢 Multiplication Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.multiplication.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('addition')">
-            ➕ Addition Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.addition.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('subtraction')">
-            ➖ Subtraction Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.subtraction.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('subtractionNegative')">
-            ➖ Subtraction with Negatives
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.subtractionNegative.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('division')">
-            ➗ Division Facts
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.division.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('divisionFractions')">
-            ➗ Division with Fractions
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.divisionFractions.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('squares')">
-            ⊞ Squares
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.squares.description}</div>
-          </button>
-          <button class="set-button" onclick="mathFacts.selectSet('subatizing')">
-            &#8759; Subatizing
-            <div style="font-size: 0.9rem; margin-top: 0.5rem; opacity: 0.8;">${this.questionSets.subatizing.description}</div>
-          </button>
+          ${buttonHTML}
         </div>
       </div>
     `;
@@ -686,15 +743,15 @@ class MathFacts {
     const slowTimeLimit = this.questionSets[this.currentSet].slowTimeLimit;
     const isSlow = thinkingTime > slowTimeLimit;
     const hourglassEmoji = isSlow ? ' ⏳' : '';
-    
-    // For subatizing, show only the answer number instead of the full question
+
+    // Check if this question set should show only the answer in history
     let displayText;
-    if (this.currentSet === 'subatizing') {
+    if (this.questionSets[this.currentSet].showInHistory === 'answer') {
       displayText = `${this.currentAnswer} ${emoji}${hourglassEmoji}`;
     } else {
       displayText = `${question} ${emoji}${hourglassEmoji}`;
     }
-    
+
     const historyItem = {
       text: displayText,
       correct: isCorrect,
