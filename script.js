@@ -196,23 +196,21 @@ class MathFacts {
       },
       subatizing: {
         name: 'Subatizing',
-        description: 'Practice subatizing up to ten.  2 second time limit!',
-        slowTimeLimit: 2000, // 2 seconds
+        description: 'Practice subatizing up to ten. Be fast!',
+        slowTimeLimit: 4000, // 4 seconds
         generate: () => {
           const answer = Math.floor(Math.random() * 10) + 1; // 1-10
-          const pre = '<pre style="text-wrap: auto; display: inline-block; margin-left: 2rem; marting-right: 2rem;">';
-          console.log("Generating ", answer, " for subatizing")
           if (Math.random() < 0.5) {  // Evenly spaced
+            let spacing = "&thinsp;&#8203;".repeat(Math.floor(Math.random() * 5.0));
             return {
-              question: pre + `&#9711; `.repeat(answer) + `</pre>`,
+              question: `&#9711;${spacing}`.repeat(answer),
               answer: answer
             };
           } else {  // Random spacing
-            var question = pre;
+            var question = "";
             for (var i = 0; i < answer; i++) {
-              question += "&#9711;" + " ".repeat(Math.floor(Math.random() * 4));
+              question += "&#9711;" + "&thinsp;&#8203;".repeat(Math.floor(Math.random() * 5.0));
             }
-            question += '</pre>';
             return {
               question: question,
               answer: answer
@@ -688,8 +686,17 @@ class MathFacts {
     const slowTimeLimit = this.questionSets[this.currentSet].slowTimeLimit;
     const isSlow = thinkingTime > slowTimeLimit;
     const hourglassEmoji = isSlow ? ' ⏳' : '';
+    
+    // For subatizing, show only the answer number instead of the full question
+    let displayText;
+    if (this.currentSet === 'subatizing') {
+      displayText = `${this.currentAnswer} ${emoji}${hourglassEmoji}`;
+    } else {
+      displayText = `${question} ${emoji}${hourglassEmoji}`;
+    }
+    
     const historyItem = {
-      text: `${question} ${emoji}${hourglassEmoji}`,
+      text: displayText,
       correct: isCorrect,
       slow: isSlow
     };
