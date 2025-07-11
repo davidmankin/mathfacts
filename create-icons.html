@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create App Icons</title>
+</head>
+<body>
+    <h1>Create App Icons</h1>
+    <p>Open this page in a browser, then right-click on each canvas and save as PNG:</p>
+    <p><strong>Save as:</strong> icon-192.png and icon-512.png</p>
+    
+    <h2>192x192 Icon</h2>
+    <canvas id="icon192" width="192" height="192"></canvas>
+    
+    <h2>512x512 Icon</h2>
+    <canvas id="icon512" width="512" height="512"></canvas>
+
+    <script>
+        function createIcon(canvasId, size) {
+            const canvas = document.getElementById(canvasId);
+            const ctx = canvas.getContext('2d');
+            
+            // Background
+            ctx.fillStyle = '#3498db';
+            ctx.fillRect(0, 0, size, size);
+            
+            // Round corners
+            ctx.globalCompositeOperation = 'destination-in';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, size, size, size * 0.125);
+            ctx.fill();
+            ctx.globalCompositeOperation = 'source-over';
+            
+            // Emoji
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.font = `${size * 0.6}px Arial`;
+            ctx.fillText('🔢', size * 0.5, size * 0.5);
+        }
+        
+        // Create both icons
+        createIcon('icon192', 192);
+        createIcon('icon512', 512);
+    </script>
+</body>
+</html>
