@@ -1,3 +1,22 @@
+class Subatizing {
+  static symbols =  [
+      "🔵", "🔴", "⚫", "⚪", "🟡", "🟢", "🟣", "🟠", "🟤",
+      "🔷", "🔶", "🔺", "🔻", "🔸", "🔹", "▪️", "▫️", "◼️", "◻️",
+      "🟥", "🟧", "🟨", "🟩", "🟦", "🟪", "🟫",
+      "⭕", "🔘", "◯",
+      "🔲", "🔳",
+      "🌀", "✴️", "✳️", "✴", "❇️", "✨", "#9711;"
+    ];
+  static symbolsPattern = RegExp(Subatizing.symbols.join("|"), "g");
+  static pickASymbol() {
+    return Subatizing.symbols[Math.floor(Math.random() * Subatizing.symbols.length)];
+  }
+  static countSymbols(str) {
+    console.log(`Parsing ${str} with ${Subatizing.symbolsPattern}`);
+    return str.match(Subatizing.symbolsPattern);
+  }
+}
+
 class MathFacts {
   // Helper function to find greatest common divisor
   static gcd(a, b) {
@@ -217,16 +236,17 @@ class MathFacts {
         slowTimeLimit: 4000, // 4 seconds
         generate: () => {
           const answer = Math.floor(Math.random() * 10) + 1; // 1-10
+          const symbol = Subatizing.pickASymbol();
           if (Math.random() < 0.5) {  // Evenly spaced
             let spacing = "&thinsp;&#8203;".repeat(Math.floor(Math.random() * 5.0));
             return {
-              question: `&#9711;${spacing}`.repeat(answer),
+              question: `${symbol}${spacing}`.repeat(answer),
               answer: answer
             };
           } else {  // Random spacing
             var question = "";
             for (var i = 0; i < answer; i++) {
-              question += "&#9711;" + "&thinsp;&#8203;".repeat(Math.floor(Math.random() * 5.0));
+              question += symbol + "&thinsp;&#8203;".repeat(Math.floor(Math.random() * 5.0));
             }
             return {
               question: question,
@@ -235,9 +255,9 @@ class MathFacts {
           }
         },
         parseAnswer: (questionStr) => {
-          // Count the number of circles (&#9711;) in the HTML
-          const circleMatches = questionStr.match(/&#9711;/g);
-          return circleMatches ? circleMatches.length : 0;
+          // Count the number of symbols in the HTML
+          const symbolMatches = Subatizing.countSymbols(questionStr);
+          return symbolMatches ? symbolMatches.length : 0;
         }
       },
       binaryToDecimal: {
@@ -266,9 +286,6 @@ class MathFacts {
           } else {
             return parseInt(parts[0], 2).toString();
           }
-          // Count the number of circles (&#9711;) in the HTML
-          const circleMatches = questionStr.match(/&#9711;/g);
-          return circleMatches ? circleMatches.length : 0;
         }
       },
       decimalToBinary: {
