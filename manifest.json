@@ -2,7 +2,7 @@
   "name": "Math Facts Practice",
   "short_name": "Math Facts",
   "description": "Practice math facts with interactive flash cards",
-  "start_url": "/",
+  "start_url": "/mathfacts/",
   "display": "fullscreen",
   "background_color": "#2c3e50",
   "theme_color": "#3498db",
@@ -25,13 +25,13 @@
       "name": "Multiplication",
       "short_name": "Multiply",
       "description": "Practice multiplication facts",
-      "url": "/?set=multiplication"
+      "url": "/mathfacts/?set=multiplication"
     },
     {
       "name": "Addition",
       "short_name": "Add",
       "description": "Practice addition facts",
-      "url": "/?set=addition"
+      "url": "/mathfacts/?set=addition"
     }
   ]
 }

@@ -1003,7 +1003,7 @@ window.mathFacts = mathFacts;
 // Register service worker for PWA functionality
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js')
+    navigator.serviceWorker.register('/mathfacts/sw.js')
       .then(registration => {
         console.log('SW registered: ', registration);
       })
