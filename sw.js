@@ -1,24 +1,24 @@
 const CACHE_NAME = 'math-facts-v1';
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/script.js',
-  '/styles.css',
-  '/manifest.json',
-  '/sounds/4-bing-things-82661.mp3',
-  '/sounds/alert-sound-87478.mp3',
-  '/sounds/belch-155023.mp3',
-  '/sounds/bing-298405.mp3',
-  '/sounds/cow_bells_01-98236.mp3',
-  '/sounds/din-ding-89718.mp3',
-  '/sounds/elevator_ping_02-40404.mp3',
-  '/sounds/mission-success-41211.mp3',
-  '/sounds/notification-sound-269266.mp3',
-  '/sounds/short-success-sound-glockenspiel-treasure-video-game-6346.mp3',
-  '/sounds/success-221935.mp3',
-  '/sounds/win-176035.mp3',
-  '/sounds/wrong.mp3',
-  '/sounds/celebration.mp3'
+  '/mathfacts/',
+  '/mathfacts/index.html',
+  '/mathfacts/script.js',
+  '/mathfacts/styles.css',
+  '/mathfacts/manifest.json',
+  '/mathfacts/sounds/4-bing-things-82661.mp3',
+  '/mathfacts/sounds/alert-sound-87478.mp3',
+  '/mathfacts/sounds/belch-155023.mp3',
+  '/mathfacts/sounds/bing-298405.mp3',
+  '/mathfacts/sounds/cow_bells_01-98236.mp3',
+  '/mathfacts/sounds/din-ding-89718.mp3',
+  '/mathfacts/sounds/elevator_ping_02-40404.mp3',
+  '/mathfacts/sounds/mission-success-41211.mp3',
+  '/mathfacts/sounds/notification-sound-269266.mp3',
+  '/mathfacts/sounds/short-success-sound-glockenspiel-treasure-video-game-6346.mp3',
+  '/mathfacts/sounds/success-221935.mp3',
+  '/mathfacts/sounds/win-176035.mp3',
+  '/mathfacts/sounds/wrong.mp3',
+  '/mathfacts/sounds/celebration.mp3'
 ];
 
 // Install event - cache resources
